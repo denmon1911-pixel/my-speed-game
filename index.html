@@ -1,44 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SpeedMaster Debug Mode</title>
-    <script src="telegram.org"></script>
-    <!-- Подключаем мобильную консоль -->
-    <script src="cdn.jsdelivr.net"></script>
-    <style>
-        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; text-align: center; }
-        iframe { border: none; width: 100vw; height: 90vh; }
-        .info { height: 10vh; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #888; }
-    </style>
-</head>
-<body>
-    <iframe id="gameFrame" src="https://t.me/EmpiresBattleBot/start"></iframe>
-    <div class="info">Нажми на шестеренку в углу -> Console -> Вставь код</div>
-
-    <script>
-        // Инициализация консоли
-        eruda.init();
-        
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
-
-        // Сразу выведем в консоль ваш код ускорения, чтобы его было удобно копировать
-        console.log("СКОПИРУЙ КОД НИЖЕ И ВСТАВЬ В ЭТУ КОНСОЛЬ:");
-        console.log(`
-(function() {
-    var multiplier = 5.0; // ТУТ МЕНЯЙ СКОРОСТЬ
-    var originalSetTimeout = window.setTimeout;
-    window.setTimeout = function(callback, delay) { return originalSetTimeout(callback, delay / multiplier); };
-    var originalSetInterval = window.setInterval;
-    window.setInterval = function(callback, delay) { return originalSetInterval(callback, delay / multiplier); };
-    var originalNow = Date.now;
-    var startTime = originalNow.call(Date);
-    Date.now = function() { return startTime + (originalNow.call(Date) - startTime) * multiplier; };
-    console.log("Ускорение " + multiplier + "x активировано!");
-})();
-        `);
-    </script>
-</body>
+ <script src="cdn.jsdelivr.net"></script>
+<script>eruda.init();</script>
 </html>
