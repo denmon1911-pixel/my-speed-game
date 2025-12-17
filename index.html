@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpeedMaster Mini App</title>
+    <!-- Подключаем скрипт Telegram -->
+    <script src="telegram.org"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; color: white; font-family: sans-serif; }
+        iframe { border: none; width: 100vw; height: 90vh; }
+        .controls { height: 10vh; display: flex; align-items: center; justify-content: center; background: #222; }
+        input { width: 70%; }
+    </style>
+</head>
+<body>
+    <iframe id="gameFrame" src="https://app4.empiresbattle.com/start"></iframe>
+    
+    <div class="controls">
+        <span>0.1x</span>
+        <input type="range" id="speedRange" min="1" max="100" value="10">
+        <span>10x</span>
+        <div id="speedVal" style="margin-left: 10px;">1.0x</div>
+    </div>
+
+    <script>
+        // 1. ВСТАВЬТЕ ВАШ ПОЛНЫЙ СКРИПТ (SpeedMasterPro) НИЖЕ
+        (function() {
+  if (window.__SpeedMasterProInjected) return;
+  window.__SpeedMasterProInjected = true;
+  let state = {
+    speed: 1.0,
+    cbSetIntervalChecked: true,
+    cbSetTimeoutChecked: true,
+    cbPerformanceNowChecked: true,
+    cbDateNowChecked: true,
+    cbRequestAnimationFrameChecked: true,
+    media: true,
+    css: true
+  };
+  const originals = {
+    setTimeout: window.setTimeout.bind(window),
+    setInterval: window.setInterval.bind(window),
+    clearTimeout: window.clearTimeout.bind(window),
+    clearInterval: window.clearInterval.bind(window),
+    requestAnimationFrame: window.requestAnimationFrame ? window.requestAnimationFrame.bind(window) : null,
+    cancelAnimationFrame: window.cancelAnimationFrame ? window.cancelAnimationFrame.bind(window) : null,
+    performanceNow: (typeof Performance !== "undefined" && Performance.prototype && Performance.prototype.now) || null,
+    dateNow: Date.now
+  };
+  const clamp = v => Math.min(100, Math.max(.1, Number(v) || 1));
+  const safe = (fn, ...a) => {
+    try {
+      return fn(...a)
+    } catch (e) {}
+  };
+
+  function applyMedia() {
+    if (!state.media) return restoreMedia();
+    document.querySelectorAll("video, audio").forEach(el => {
+      try {
+        const s = clamp(state.speed);
+        el.playbackRate = Math.max(.1, Math.min(16, s))
+      } catch (e) {}
+    })
+  }
+
+  function restoreMedia() {
+    document.querySelectorAll("video, audio").forEach(el => {
+      try {
+        el.playbackRate = 1
+      } catch (e) {}
+    })
+  }
+  const mediaObs = new MutationObserver(() => state.media && applyMedia());
+  safe(() => mediaObs.observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  }));
+
+  function applyCSS() {
+    if (!state.css) return restoreCSS();
+    try {
+      (document.getAnimations?.() || []).forEach(a => safe(() => a.updatePlaybackRate(clamp(state.speed))))
+    } catch (e) {}
+  }
+
+  function restoreCSS() {
+    try {
+      (document.getAnimations?.() || []).forEach(a => safe(() => a.updatePlaybackRate(1)))
+    } catch (e) {}
+  }
+  let timersPatched = false;
+
+  function patchTimers() {
+    if (timersPatched) return;
+    timersPatched = true;
+    const scaleDelay = d => {
+      const s = clamp(state.speed);
+      const n = Number(d) || 0;
+      return Math.max(0, n / s)
+    };
+    if (state.cbSetTimeoutChecked) {
+      window.setTimeout = function(fn, t, ...args) {
+        return originals.setTimeout(fn, scaleDelay(t), ...args)
+      }
+    }
+    if (state.cbSetIntervalChecked) {
+      window.setInterval = function(fn, t, ...args) {
+        return originals.setInterval(fn, scaleDelay(t), ...args)
+      }
+    }
+    window.clearTimeout = originals.clearTimeout;
+    window.clearInterval = originals.clearInterval
+  }
+
+  function unpatchTimers() {
+    if (!timersPatched) return;
+    window.setTimeout = originals.setTimeout;
+    window.setInterval = originals.setInterval;
+    timersPatched = false
+  }
+  let timePatched = false;
+  let perfBaseReal = 0,
+    perfBaseVirtual = 0;
+  let dateBaseReal = 0,
+    dateBaseVirtual = 0;
+  let timeScale = 1.0;
+
+  function scaledFromReal(real, baseReal, baseVirtual, scale) {
+    return baseVirtual + (real - baseReal) * scale
+  }
+
+  function updateTimeScale(newScale) {
+    const s = clamp(newScale);
+    const realPerf = originals.performanceNow ? originals.performanceNow.call(performance) : 0;
+    const realDate = (originals.dateNow || Date.now)();
+    const virtPerf = scaledFromReal(realPerf, perfBaseReal, perfBaseVirtual, timeScale);
+    const virtDate = scaledFromReal(realDate, dateBaseReal, dateBaseVirtual, timeScale);
+    perfBaseReal = realPerf;
+    perfBaseVirtual = virtPerf;
+    dateBaseReal = realDate;
+    dateBaseVirtual = virtDate;
+    timeScale = s
+  }
+
+  function patchTimeSources() {
+    if (timePatched) return;
+    timePatched = true;
+    perfBaseReal = originals.performanceNow ? originals.performanceNow.call(performance) : 0;
+    perfBaseVirtual = perfBaseReal;
+    dateBaseReal = (originals.dateNow || Date.now)();
+    dateBaseVirtual = dateBaseReal;
+    timeScale = clamp(state.speed);
+    if (state.cbPerformanceNowChecked && originals.performanceNow) {
+      safe(() => {
+        const realNow = originals.performanceNow;
+        Performance.prototype.now = function() {
+          const r = realNow.call(this);
+          return scaledFromReal(r, perfBaseReal, perfBaseVirtual, timeScale)
+        }
+      })
+    }
+    if (state.cbDateNowChecked) {
+      safe(() => {
+        const realDateNow = originals.dateNow || Date.now;
+        Date.now = function() {
+          const r = realDateNow();
+          return Math.round(scaledFromReal(r, dateBaseReal, dateBaseVirtual, timeScale))
+        }
+      })
+    }
+  }
+
+  function unpatchTimeSources() {
+    if (!timePatched) return;
+    if (originals.performanceNow) safe(() => {
+      Performance.prototype.now = originals.performanceNow
+    });
+    safe(() => {
+      Date.now = originals.dateNow
+    });
+    timePatched = false
+  }
+  let rafPatched = false;
+
+  function patchRAF() {
+    if (rafPatched || !originals.requestAnimationFrame) return;
+    rafPatched = true;
+    window.requestAnimationFrame = function(cb) {
+      return originals.requestAnimationFrame(function(realTs) {
+        const ts = (timePatched && state.cbPerformanceNowChecked) ? scaledFromReal(realTs, perfBaseReal, perfBaseVirtual, timeScale) : realTs;
+        try {
+          cb(ts)
+        } catch (e) {
+          originals.setTimeout(() => {
+            throw e;
+          })
+        }
+      })
+    };
+    window.cancelAnimationFrame = originals.cancelAnimationFrame
+  }
+
+  function unpatchRAF() {
+    if (!rafPatched) return;
+    if (originals.requestAnimationFrame) {
+      window.requestAnimationFrame = originals.requestAnimationFrame;
+      window.cancelAnimationFrame = originals.cancelAnimationFrame
+    }
+    rafPatched = false
+  }
+
+  function applyAll(prevSpeed) {
+    if (timePatched && prevSpeed !== undefined && prevSpeed !== state.speed) {
+      updateTimeScale(state.speed)
+    }
+    state.media ? applyMedia() : restoreMedia();
+    state.css ? applyCSS() : restoreCSS();
+    if (state.cbSetTimeoutChecked || state.cbSetIntervalChecked) patchTimers();
+    else unpatchTimers();
+    const wantTime = state.cbPerformanceNowChecked || state.cbDateNowChecked;
+    if (wantTime) patchTimeSources();
+    else unpatchTimeSources();
+    if (state.cbRequestAnimationFrameChecked) patchRAF();
+    else unpatchRAF()
+  }
+
+  function resetAll() {
+    const prev = state.speed;
+    state = {
+      speed: 1.0,
+      cbSetIntervalChecked: true,
+      cbSetTimeoutChecked: true,
+      cbPerformanceNowChecked: true,
+      cbDateNowChecked: true,
+      cbRequestAnimationFrameChecked: true,
+      media: true,
+      css: true
+    };
+    restoreMedia();
+    restoreCSS();
+    unpatchTimers();
+    unpatchTimeSources();
+    unpatchRAF();
+    applyAll(prev)
+  }
+  window.addEventListener("message", (ev) => {
+    const data = ev?.data;
+    if (!data || data.__speedmaster !== true) return;
+    if (data.type === "APPLY" && data.payload) {
+      const p = data.payload;
+      const prev = state.speed;
+      state.speed = clamp(p.speed || 1);
+      state.cbSetIntervalChecked = !!p.cbSetIntervalChecked;
+      state.cbSetTimeoutChecked = !!p.cbSetTimeoutChecked;
+      state.cbPerformanceNowChecked = !!p.cbPerformanceNowChecked;
+      state.cbDateNowChecked = !!p.cbDateNowChecked;
+      state.cbRequestAnimationFrameChecked = !!p.cbRequestAnimationFrameChecked;
+      state.media = !!p.media;
+      state.css = !!p.css;
+      applyAll(prev)
+    } else if (data.type === "RESET") {
+      resetAll()
+    }
+  });
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => applyAll(), {
+      once: true
+    })
+  } else {
+    applyAll()
+  }
+            // ... ваш код из предыдущих сообщений ...
+        })();
+
+        // 2. Логика управления скоростью через ползунок
+        const range = document.getElementById('speedRange');
+        const valDisplay = document.getElementById('speedVal');
+        const frame = document.getElementById('gameFrame');
+
+        range.addEventListener('input', (e) => {
+            const speed = e.target.value / 10;
+            valDisplay.innerText = speed + 'x';
+
+            // Отправляем команду ускорения внутрь iframe с игрой и в основное окно
+            const payload = {
+                __speedmaster: true,
+                type: 'APPLY',
+                payload: {
+                    speed: speed,
+                    cbSetIntervalChecked: true,
+                    cbSetTimeoutChecked: true,
+                    cbPerformanceNowChecked: true,
+                    cbDateNowChecked: true,
+                    cbRequestAnimationFrameChecked: true,
+                    media: true,
+                    css: true
+                }
+            };
+            window.postMessage(payload, '*');
+            frame.contentWindow.postMessage(payload, '*');
+        });
+
+        // Сообщаем Telegram, что приложение готово
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand(); // Развернуть на весь экран
+    </script>
+</body>
+</html>
