@@ -1,145 +1,44 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Speed Optimizer 2025</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SpeedMaster Debug Mode</title>
     <script src="telegram.org"></script>
+    <!-- Подключаем мобильную консоль -->
+    <script src="cdn.jsdelivr.net"></script>
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; background: #1a1a1a; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        #gameFrame { border: none; width: 100vw; height: calc(100vh - 70px); background: #000; }
-        .controls { 
-            height: 70px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            background: #2c2c2e; 
-            border-top: 1px solid #3a3a3c;
-            padding: 5px 15px;
-        }
-        .row { display: flex; align-items: center; width: 100%; justify-content: space-between; margin: 2px 0; }
-        input[type="range"] { flex: 1; margin: 0 15px; accent-color: #007aff; }
-        .speed-val { font-weight: bold; min-width: 45px; text-align: right; color: #007aff; }
-        label { display: flex; align-items: center; font-size: 14px; user-select: none; }
-        input[type="checkbox"] { width: 18px; height: 18px; margin-right: 8px; }
+        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; text-align: center; }
+        iframe { border: none; width: 100vw; height: 90vh; }
+        .info { height: 10vh; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #888; }
     </style>
 </head>
 <body>
-
-    <!-- ОКНО ИГРЫ -->
     <iframe id="gameFrame" src="https://t.me/EmpiresBattleBot/start"></iframe>
-
-    <!-- ПАНЕЛЬ УПРАВЛЕНИЯ -->
-    <div class="controls">
-        <div class="row">
-            <label>
-                <input type="checkbox" id="enableSpeed" checked> Активен
-            </label>
-            <div class="speed-val" id="speedVal">1.0x</div>
-        </div>
-        <div class="row">
-            <span>0.1x</span>
-            <input type="range" id="speedRange" min="1" max="100" value="10">
-            <span>10x</span>
-        </div>
-    </div>
+    <div class="info">Нажми на шестеренку в углу -> Console -> Вставь код</div>
 
     <script>
-        // --- ЧАСТЬ 1: ВАШ СКРИПТ (ЯДРО SPEEDMASTERPRO) ---
-        (function() {
-            if (window.__SpeedMasterProInjected) return;
-            window.__SpeedMasterProInjected = true;
-            let state = { speed: 1.0, cbSetIntervalChecked: true, cbSetTimeoutChecked: true, cbPerformanceNowChecked: true, cbDateNowChecked: true, cbRequestAnimationFrameChecked: true, media: true, css: true };
-            const originals = {
-                setTimeout: window.setTimeout.bind(window),
-                setInterval: window.setInterval.bind(window),
-                clearTimeout: window.clearTimeout.bind(window),
-                clearInterval: window.clearInterval.bind(window),
-                requestAnimationFrame: window.requestAnimationFrame ? window.requestAnimationFrame.bind(window) : null,
-                cancelAnimationFrame: window.cancelAnimationFrame ? window.cancelAnimationFrame.bind(window) : null,
-                performanceNow: (typeof Performance !== "undefined" && Performance.prototype && Performance.prototype.now) || null,
-                dateNow: Date.now
-            };
-            const clamp = v => Math.min(100, Math.max(.1, Number(v) || 1));
-            const safe = (fn, ...a) => { try { return fn(...a) } catch (e) {} };
+        // Инициализация консоли
+        eruda.init();
+        
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
 
-            function applyMedia() {
-                document.querySelectorAll("video, audio").forEach(el => { try { el.playbackRate = state.media ? clamp(state.speed) : 1 } catch (e) {} })
-            }
-
-            function updateTimeScale(newScale) {
-                const s = clamp(newScale);
-                const realPerf = originals.performanceNow ? originals.performanceNow.call(performance) : 0;
-                const realDate = originals.dateNow();
-                // ... (логика пересчета времени из вашего скрипта)
-                timeScale = s;
-            }
-
-            // (Здесь должны быть функции patchTimers, patchTimeSources и т.д. из вашего исходного кода)
-            // Для краткости я использую логику обработки сообщений, которую вы прислали:
-
-            window.addEventListener("message", (ev) => {
-                const data = ev?.data;
-                if (!data || data.__speedmaster !== true) return;
-                if (data.type === "APPLY" && data.payload) {
-                    Object.assign(state, data.payload);
-                    // Здесь вызываются ваши функции активации ускорения (applyAll)
-                    console.log("Скорость изменена на:", state.speed);
-                } else if (data.type === "RESET") {
-                    state.speed = 1.0;
-                    // Здесь вызываются функции сброса (resetAll)
-                    console.log("Ускорение выключено");
-                }
-            });
-        })();
-
-        // --- ЧАСТЬ 2: ЛОГИКА ВКЛЮЧЕНИЯ/ВЫКЛЮЧЕНИЯ И ПОЛЗУНКА ---
-        const range = document.getElementById('speedRange');
-        const checkbox = document.getElementById('enableSpeed');
-        const valDisplay = document.getElementById('speedVal');
-        const frame = document.getElementById('gameFrame');
-
-        function updateSpeed() {
-            const isEnabled = checkbox.checked;
-            const speed = range.value / 10;
-            
-            let payload;
-            if (isEnabled) {
-                valDisplay.innerText = speed.toFixed(1) + 'x';
-                payload = {
-                    __speedmaster: true,
-                    type: 'APPLY',
-                    payload: {
-                        speed: speed,
-                        cbSetIntervalChecked: true,
-                        cbSetTimeoutChecked: true,
-                        cbPerformanceNowChecked: true,
-                        cbDateNowChecked: true,
-                        cbRequestAnimationFrameChecked: true,
-                        media: true,
-                        css: true
-                    }
-                };
-            } else {
-                valDisplay.innerText = '1.0x (Выкл)';
-                payload = { __speedmaster: true, type: 'RESET' };
-            }
-
-            // Отправляем команду самому себе и внутрь игры
-            window.postMessage(payload, '*');
-            if (frame.contentWindow) {
-                frame.contentWindow.postMessage(payload, '*');
-            }
-        }
-
-        range.addEventListener('input', updateSpeed);
-        checkbox.addEventListener('change', updateSpeed);
-
-        // Инициализация Telegram
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+        // Сразу выведем в консоль ваш код ускорения, чтобы его было удобно копировать
+        console.log("СКОПИРУЙ КОД НИЖЕ И ВСТАВЬ В ЭТУ КОНСОЛЬ:");
+        console.log(`
+(function() {
+    var multiplier = 5.0; // ТУТ МЕНЯЙ СКОРОСТЬ
+    var originalSetTimeout = window.setTimeout;
+    window.setTimeout = function(callback, delay) { return originalSetTimeout(callback, delay / multiplier); };
+    var originalSetInterval = window.setInterval;
+    window.setInterval = function(callback, delay) { return originalSetInterval(callback, delay / multiplier); };
+    var originalNow = Date.now;
+    var startTime = originalNow.call(Date);
+    Date.now = function() { return startTime + (originalNow.call(Date) - startTime) * multiplier; };
+    console.log("Ускорение " + multiplier + "x активировано!");
+})();
+        `);
     </script>
 </body>
 </html>
