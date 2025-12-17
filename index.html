@@ -2,91 +2,35 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SpeedMaster Mini App</title>
-    <!-- Подключаем Telegram Web Apps SDK -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Speed Optimizer 2025</title>
     <script src="telegram.org"></script>
     <style>
-        body { 
-            margin: 0; 
-            padding: 0;
-            background: #000; 
-            color: white; 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
+        body { margin: 0; padding: 0; overflow: hidden; background: #1a1a1a; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        #gameFrame { border: none; width: 100vw; height: calc(100vh - 70px); background: #000; }
+        .controls { 
+            height: 70px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            background: #2c2c2e; 
+            border-top: 1px solid #3a3a3c;
+            padding: 5px 15px;
         }
-        /* Контейнер для игры */
-        #game-container {
-            flex: 1;
-            width: 100%;
-            position: relative;
-        }
-        iframe {
-            border: none;
-            width: 100%;
-            height: 100%;
-        }
-        /* Панель управления в стиле Telegram */
-        .controls {
-            padding: 15px;
-            background: #1c1c1d;
-            border-top: 1px solid #333;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding-bottom: env(safe-area-inset-bottom); /* Отступ для iPhone */
-        }
-        input[type=range] {
-            flex: 1;
-            accent-color: #248bcf;
-        }
-        .speed-label {
-            min-width: 45px;
-            font-weight: bold;
-            color: #248bcf;
-            text-align: center;
-        }
+        .row { display: flex; align-items: center; width: 100%; justify-content: space-between; margin: 2px 0; }
+        input[type="range"] { flex: 1; margin: 0 15px; accent-color: #007aff; }
+        .speed-val { font-weight: bold; min-width: 45px; text-align: right; color: #007aff; }
+        label { display: flex; align-items: center; font-size: 14px; user-select: none; }
+        input[type="checkbox"] { width: 18px; height: 18px; margin-right: 8px; }
     </style>
 </head>
 <body>
 
-    <div id="game-container">
-        <!-- ВАЖНО: Прямой URL на игру (Web App URL), а не ссылка на бота -->
-        <iframe id="gameFrame" src="https://app4.empiresbattle.com/start#tgWebAppData=user%3D%257B%2522id%2522%253A1777339623%252C%2522first_name%2522%253A%2522Dmytro%2522%252C%2522last_name%2522%253A%2522%2522%252C%2522username%2522%253A%2522denmon1911%2522%252C%2522language_code%2522%253A%2522ru%2522%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252FHniHfCMF1cburLEzwYVCQuymHlIC69_tser6_2X6rt0.svg%2522%257D%26chat_instance%3D-420625913097209181%26chat_type%3Dsender%26auth_date%3D1763675684%26signature%3DMhnzng1TRQoprSWvLZzyK3MmajLrZutfqJysvf2KF2o9Usue0WSqlLLfgE-hAmeN_4YvHwUWdgpLUGEU9FW4DQ%26hash%3D8fb519c15ccd09f42fba8fdfea922ace469a848b859acf9570a632e20df006e6&amp;tgWebAppVersion=9.1&amp;tgWebAppPlatform=weba&amp;tgWebAppThemeParams=%7B%22bg_color%22%3A%22%23ffffff%22%2C%22text_color%22%3A%22%23000000%22%2C%22hint_color%22%3A%22%23707579%22%2C%22link_color%22%3A%22%233390ec%22%2C%22button_color%22%3A%22%233390ec%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22secondary_bg_color%22%3A%22%23f4f4f5%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22accent_text_color%22%3A%22%233390ec%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23707579%22%2C%22subtitle_text_color%22%3A%22%23707579%22%2C%22destructive_text_color%22%3A%22%23e53935%22%7D"></iframe>
-    </div>
-    
-    <div class="controls">
-        <span>0.1x</span>
-        <input type="range" id="speedRange" min="1" max="100" value="10">
-        <div id="speedVal" class="speed-label">1.0x</div>
-    </div>
+    <!-- ОКНО ИГРЫ -->
+    <iframe id="gameFrame" src="https://app4.empiresbattle.com/start#tgWebAppData=user%3D%257B%2522id%2522%253A1777339623%252C%2522first_name%2522%253A%2522Dmytro%2522%252C%2522last_name%2522%253A%2522%2522%252C%2522username%2522%253A%2522denmon1911%2522%252C%2522language_code%2522%253A%2522ru%2522%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252FHniHfCMF1cburLEzwYVCQuymHlIC69_tser6_2X6rt0.svg%2522%257D%26chat_instance%3D-420625913097209181%26chat_type%3Dsender%26auth_date%3D1763675684%26signature%3DMhnzng1TRQoprSWvLZzyK3MmajLrZutfqJysvf2KF2o9Usue0WSqlLLfgE-hAmeN_4YvHwUWdgpLUGEU9FW4DQ%26hash%3D8fb519c15ccd09f42fba8fdfea922ace469a848b859acf9570a632e20df006e6&amp;tgWebAppVersion=9.1&amp;tgWebAppPlatform=weba&amp;tgWebAppThemeParams=%7B%22bg_color%22%3A%22%23ffffff%22%2C%22text_color%22%3A%22%23000000%22%2C%22hint_color%22%3A%22%23707579%22%2C%22link_color%22%3A%22%233390ec%22%2C%22button_color%22%3A%22%233390ec%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22secondary_bg_color%22%3A%22%23f4f4f5%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22accent_text_color%22%3A%22%233390ec%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23707579%22%2C%22subtitle_text_color%22%3A%22%23707579%22%2C%22destructive_text_color%22%3A%22%23e53935%22%7D"></iframe>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand(); // Расширяем на весь экран
-
-        const frame = document.getElementById('gameFrame');
-        const range = document.getElementById('speedRange');
-        const speedVal = document.getElementById('speedVal');
-
-        // Функция отправки настроек в iframe
-        function updateSpeed(val) {
-            const speed = val / 10;
-            speedVal.innerText = speed.toFixed(1) + 'x';
-            
-            // Пытаемся отправить сообщение в iframe (требует поддержки на стороне игры)
-            frame.contentWindow.postMessage({
-                __speedmaster: true,
-                type: "APPLY",
-                payload: { speed: speed }
-            }, '*');
-        }
-
-        range.addEventListener('input', (e) => updateSpeed(e.target.value));
-<!-- ПАНЕЛЬ УПРАВЛЕНИЯ -->
+    <!-- ПАНЕЛЬ УПРАВЛЕНИЯ -->
     <div class="controls">
         <div class="row">
             <label>
@@ -101,11 +45,8 @@
         </div>
     </div>
 
-
-        // ВНИМАНИЕ: Чтобы SpeedMaster работал, его код должен быть ВНУТРИ загружаемой страницы.
-        // Если вы просто вставите его здесь, он будет ускорять только пустую оболочку Mini App.
-        
-        // Ваш оригинальный скрипт (сокращенно для примера)
+    <script>
+        // --- ЧАСТЬ 1: ВАШ СКРИПТ (ЯДРО SPEEDMASTERPRO) ---
         (function() {
             if (window.__SpeedMasterProInjected) return;
             window.__SpeedMasterProInjected = true;
@@ -199,8 +140,6 @@
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
-
-        })();
     </script>
 </body>
 </html>
