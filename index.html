@@ -86,6 +86,21 @@
         }
 
         range.addEventListener('input', (e) => updateSpeed(e.target.value));
+<!-- ПАНЕЛЬ УПРАВЛЕНИЯ -->
+    <div class="controls">
+        <div class="row">
+            <label>
+                <input type="checkbox" id="enableSpeed" checked> Активен
+            </label>
+            <div class="speed-val" id="speedVal">1.0x</div>
+        </div>
+        <div class="row">
+            <span>0.1x</span>
+            <input type="range" id="speedRange" min="1" max="100" value="10">
+            <span>10x</span>
+        </div>
+    </div>
+
 
         // ВНИМАНИЕ: Чтобы SpeedMaster работал, его код должен быть ВНУТРИ загружаемой страницы.
         // Если вы просто вставите его здесь, он будет ускорять только пустую оболочку Mini App.
